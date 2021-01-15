@@ -14,7 +14,10 @@ Fork of [NDtw](https://nuget.org/packages/NDtw) to match python's fastdtw api an
             public void ShouldCorrectlyCalculateDtw()
             {
                 var data = JsonConvert.DeserializeObject<TestData>(File.ReadAllText("test.json"));
-                var result = new Fastdtw(data.x, data.y, (x, y) => (new DenseVector(x) - new DenseVector(y)).L2Norm()).GetCost();
+                var result = new Fastdtw(
+                    data.x, 
+                    data.y, 
+                    (x, y) => (new DenseVector(x) - new DenseVector(y)).L2Norm()).GetCost();
                 Assert.Equal(1.085367424306426, result);
             }
             private class TestData
@@ -35,9 +38,9 @@ It is the same as this NDtw code:
     }
     var series = new[] {
         new SeriesVariable(SelectDim(x, 0), SelectDim(y, 0)),
-        new SeriesVariable(SelectDim(x, 1), SelectDim(y, 1))
+        new SeriesVariable(SelectDim(x, 1), SelectDim(y, 1)),
     };
-    return new Dtw(series).GetCost();
+    return new Dtw(series, DistanceMeasure.Euclidean).GetCost();
 
 License
 ====
