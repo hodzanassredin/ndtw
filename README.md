@@ -28,6 +28,17 @@ Fork of [NDtw](https://nuget.org/packages/NDtw) to match python's fastdtw api an
     }
 
 
+It is the same as this NDtw code:
+
+    private static double[] SelectDim(double[][] arr, int dim) {
+            return arr.Select(x => x[dim]).ToArray();
+    }
+    var series = new[] {
+        new SeriesVariable(SelectDim(x, 0), SelectDim(y, 0)),
+        new SeriesVariable(SelectDim(x, 1), SelectDim(y, 1))
+    };
+    return new Dtw(series).GetCost();
+
 License
 ====
 NDtw is released under the MIT license: www.opensource.org/licenses/MIT
