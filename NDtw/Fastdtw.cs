@@ -20,20 +20,26 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
+using MathNet.Numerics.LinearAlgebra.Double;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace NDtw
+namespace Fastdtw
 {
-    public class Dtw : IDtw
+    public class Fastdtw
     {
+        public static double DefaultDistance(double[] a, double[] b)
+        {
+            return (new DenseVector(a) - new DenseVector(b)).L2Norm();
+        }
         private readonly int _xLen;
         private readonly int _yLen;
         private readonly bool _isXLongerOrEqualThanY;
         private readonly int _signalsLengthDifference;
-        private readonly SeriesVariable[] _seriesVariables;
-        private readonly DistanceMeasure _distanceMeasure;
+        private readonly double[][] _x;
+        private readonly double[][] _y;
+        private readonly Func<double[],double[],double> _distanceMeasure;
         private readonly bool _boundaryConstraintStart;
         private readonly bool _boundaryConstraintEnd;
         private readonly bool _sakoeChibaConstraint;
@@ -51,23 +57,6 @@ namespace NDtw
         private int[][][] _predecessorStepY;
 
         /// <summary>
-        /// Initialize class that performs single variable DTW calculation for given series and settings.
-        /// </summary>
-        /// <param name="x">Series A, array of values.</param>
-        /// <param name="y">Series B, array of values.</param>
-        /// /// <param name="distanceMeasure">Distance measure used (how distance for value pair (p,q) of signal elements is calculated from multiple variables).</param>
-        /// <param name="boundaryConstraintStart">Apply boundary constraint at (1, 1).</param>
-        /// <param name="boundaryConstraintEnd">Apply boundary constraint at (m, n).</param>
-        /// <param name="slopeStepSizeDiagonal">Diagonal steps in local window for calculation. Results in Ikatura paralelogram shaped dtw-candidate space. Use in combination with slopeStepSizeAside parameter. Leave null for no constraint.</param>
-        /// <param name="slopeStepSizeAside">Side steps in local window for calculation. Results in Ikatura paralelogram shaped dtw-candidate space. Use in combination with slopeStepSizeDiagonal parameter. Leave null for no constraint.</param>
-        /// <param name="sakoeChibaMaxShift">Sakoe-Chiba max shift constraint (side steps). Leave null for no constraint.</param>
-        public Dtw(double[] x, double[] y, DistanceMeasure distanceMeasure = DistanceMeasure.Euclidean, bool boundaryConstraintStart = true, bool boundaryConstraintEnd = true, int? slopeStepSizeDiagonal = null, int? slopeStepSizeAside = null, int? sakoeChibaMaxShift = null)
-            : this(new [] { new SeriesVariable(x, y) }, distanceMeasure, boundaryConstraintStart, boundaryConstraintEnd, slopeStepSizeDiagonal, slopeStepSizeAside, sakoeChibaMaxShift)
-        {
-            
-        }
-
-        /// <summary>
         /// Initialize class that performs multivariate DTW calculation for given series and settings.
         /// </summary>
         /// <param name="seriesVariables">Array of series value pairs for different variables with additional options for data preprocessing and weights.</param>
@@ -77,27 +66,16 @@ namespace NDtw
         /// <param name="slopeStepSizeDiagonal">Diagonal steps in local window for calculation. Results in Ikatura paralelogram shaped dtw-candidate space. Use in combination with slopeStepSizeAside parameter. Leave null for no constraint.</param>
         /// <param name="slopeStepSizeAside">Side steps in local window for calculation. Results in Ikatura paralelogram shaped dtw-candidate space. Use in combination with slopeStepSizeDiagonal parameter. Leave null for no constraint.</param>
         /// <param name="sakoeChibaMaxShift">Sakoe-Chiba max shift constraint (side steps). Leave null for no constraint.</param>
-        public Dtw(SeriesVariable[] seriesVariables, DistanceMeasure distanceMeasure = DistanceMeasure.Euclidean, bool boundaryConstraintStart = true, bool boundaryConstraintEnd = true, int? slopeStepSizeDiagonal = null, int? slopeStepSizeAside = null, int? sakoeChibaMaxShift = null)
+        public Fastdtw(double[][] x, double[][] y, Func<double[], double[], double> distanceMeasure = null, bool boundaryConstraintStart = true, bool boundaryConstraintEnd = true, int? slopeStepSizeDiagonal = null, int? slopeStepSizeAside = null, int? sakoeChibaMaxShift = null)
         {
-            _seriesVariables = seriesVariables;
-            _distanceMeasure = distanceMeasure;
+            _x = x;
+            _y = y;
+            _distanceMeasure = distanceMeasure ?? DefaultDistance;
             _boundaryConstraintStart = boundaryConstraintStart;
             _boundaryConstraintEnd = boundaryConstraintEnd;
 
-            if (seriesVariables == null || seriesVariables.Length == 0)
-                throw new ArgumentException("Series should have values for at least one variable.");
-
-            for (int i = 1; i < _seriesVariables.Length; i++)
-            {
-                if (_seriesVariables[i].OriginalXSeries.Length != _seriesVariables[0].OriginalXSeries.Length)
-                    throw new ArgumentException("All variables withing series should have the same number of values.");
-
-                if (_seriesVariables[i].OriginalYSeries.Length != _seriesVariables[0].OriginalYSeries.Length)
-                    throw new ArgumentException("All variables withing series should have the same number of values.");
-            }
-
-            _xLen = _seriesVariables[0].OriginalXSeries.Length;
-            _yLen = _seriesVariables[0].OriginalYSeries.Length;
+            _xLen = _x.Length;
+            _yLen = _y.Length;
 
             if(_xLen == 0 || _yLen == 0)
                 throw new ArgumentException("Both series should have at least one value.");
@@ -163,41 +141,15 @@ namespace NDtw
                     _pathCost[i][_yLen - 1 + additionalIndex] = double.PositiveInfinity;
             }
 
-            //calculate distances for 'data' part of the matrix
-            foreach (SeriesVariable seriesVariable in _seriesVariables)
+            for (int i = 0; i < _xLen; i++)
             {
-                var xSeriesForVariable = seriesVariable.GetPreprocessedXSeries();
-                var ySeriesForVariable = seriesVariable.GetPreprocessedYSeries();
-                //weight for current variable distances that is applied BEFORE the value is further transformed by distance measure
-                var variableWeight = seriesVariable.Weight;
-
-                for (int i = 0; i < _xLen; i++)
+                var currentDistances = _distances[i];
+                var xVal = _x[i];
+                for (int j = 0; j < _yLen; j++)
                 {
-                    var currentDistances = _distances[i];
-                    var xVal = xSeriesForVariable[i];
-                    for (int j = 0; j < _yLen; j++)
-                    {
-                        if(_distanceMeasure == DistanceMeasure.Manhattan)
-                            currentDistances[j] += Math.Abs(xVal - ySeriesForVariable[j]) * variableWeight;
-                        else if (_distanceMeasure == DistanceMeasure.Maximum)
-                            currentDistances[j] = Math.Max(currentDistances[j], Math.Abs(xVal - ySeriesForVariable[j]) * variableWeight);
-                        else
-                        {
-                            //Math.Pow(xVal - ySeriesForVariable[j], 2) is much slower, so direct multiplication with temporary variable is used
-                            var dist = (xVal - ySeriesForVariable[j]) * variableWeight;
-                            currentDistances[j] += dist * dist;
-                        }        
-                    }
+                    currentDistances[j] += _distanceMeasure(xVal, _y[j]);
                 }
             }
-
-            if(_distanceMeasure == DistanceMeasure.Euclidean)
-                for (int i = 0; i < _xLen; i++)
-                {
-                    var currentDistances = _distances[i];
-                    for (int j = 0; j < _yLen; j++)
-                        currentDistances[j] = Math.Sqrt(currentDistances[j]);
-                }
         }
 
         private void CalculateWithoutSlopeConstraint()
@@ -473,10 +425,5 @@ namespace NDtw
         {
             get { return _yLen; }
         }
-
-        public SeriesVariable[] SeriesVariables
-        {
-            get { return _seriesVariables; }
-        }   
     }
 }
