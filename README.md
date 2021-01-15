@@ -1,5 +1,4 @@
 Fork of [NDtw](https://nuget.org/packages/NDtw) to match python's fastdtw api and support MathNet Numerics distance functions
-====
 
     using MathNet.Numerics.LinearAlgebra.Double;
     using Newtonsoft.Json;
