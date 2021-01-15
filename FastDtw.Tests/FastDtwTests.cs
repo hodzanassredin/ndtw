@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 using System.IO;
 using Xunit;
 
-namespace Fastdtw.Tests
+namespace NFastdtw.Tests
 {
     public class FastDtwTests
     {

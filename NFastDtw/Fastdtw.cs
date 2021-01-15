@@ -25,7 +25,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Fastdtw
+namespace NFastdtw
 {
     public class Fastdtw
     {

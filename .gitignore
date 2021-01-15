@@ -100,3 +100,4 @@ Backup*/
 UpgradeLog*.XML
 /packages/MathNet.Numerics.4.15.0
 /.vs/NDtw/v16/TestStore/0
+/.vs
