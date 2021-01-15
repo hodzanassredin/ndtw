@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NDtw\FastDtw.csproj" />
+    <ProjectReference Include="..\FastDtw\FastDtw.csproj" />
   </ItemGroup>
 
   <ItemGroup>
