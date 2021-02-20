@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FsFastDtw\NFastDtw.fsproj" />
+    <ProjectReference Include="..\NFastDtw\NFastDtw.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
