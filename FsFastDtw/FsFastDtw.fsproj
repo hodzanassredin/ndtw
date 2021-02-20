@@ -11,8 +11,4 @@
     <Compile Include="FastDtw.fs" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="MathNet.Numerics" Version="4.15.0" />
-  </ItemGroup>
-
 </Project>

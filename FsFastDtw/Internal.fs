@@ -2,7 +2,6 @@
 
 open System
 open Microsoft.FSharp.Core.LanguagePrimitives
-open MathNet.Numerics.LinearAlgebra.Double
 
 /// Internal functions for FastDtw algorithm.
 /// These are not intended for external consumption
@@ -26,7 +25,7 @@ module Internal =
   // Functions
 
   /// Calculate distance between 2 values
-  let inline distance (a:double[]) (b:double[]) : double = (new DenseVector(a) - new DenseVector(b)).L2Norm()
+  //let inline distance (a:double[]) (b:double[]) : double = (new DenseVector(a) - new DenseVector(b)).L2Norm()
   
   /// Determine maximum of two values
   let inline max a b = if a > b then a else b 
@@ -135,7 +134,7 @@ module Internal =
 
 
   /// Calculate dtw cost & travelled path
-  let calculateDtw (a: double[][]) (b: double[][]) window :(double * Point list) =
+  let calculateDtw (a: double[][]) (b: double[][]) window (distance :Func<double[],double[],double>) :(double * Point list)  =
     let rec calculateDtw' i j n m (costGrid :double[,]) (a :double[][]) (b :double[][]) window :(double * Point list) =
       if i > n then
         let travelledPath = getTravelledPath n m window costGrid 
@@ -143,7 +142,7 @@ module Internal =
       else if j > m then
         calculateDtw' (i + 1) 1 n m costGrid a b window
       else
-        let cost = distance (a.[i-1]) (b.[j-1])
+        let cost = distance.Invoke(a.[i-1],b.[j-1])
         costGrid.[i,j] <- cost + (min3
                                     costGrid.[i-1,j]
                                     costGrid.[i,j-1]
@@ -161,7 +160,7 @@ module Internal =
     calculateDtw' 1 1 n m path a b window
 
   /// Calculate Dtw cost and path, limit using windowing
-  let calculateDtwWithWindow (series1: double[][]) (series2: double[][]) (window: Window list) :(double * Point list) =
+  let calculateDtwWithWindow (series1: double[][]) (series2: double[][]) (window: Window list) (distance :Func<double[],double[],double>) :(double * Point list)  =
     let fullWindow = window
     let rec calculateDtwWithWindow' pw w i j nmin mmin n m (costGrid:double[,]) (a:double[][]) (b:double[][]) :(double * Point list) =
       if i > n then
@@ -177,7 +176,7 @@ module Internal =
       else if j > m then
         calculateDtwWithWindow' pw w (i + 1) mmin nmin mmin n m costGrid a b
       else
-        let cost = distance (a.[i-1]) (b.[j-1])
+        let cost = distance.Invoke (a.[i-1],b.[j-1])
         let additionalCost = 
           match (i > nmin, j > mmin) with
           | (true, true)   -> min3
@@ -230,10 +229,10 @@ module Internal =
   /// series2: Second series
   /// windows: List of windows that the path must stay within
   /// Returns: distance between series and the point mapping of travelled path
-  let dtw (series1: double[][]) (series2: double[][]) (windows: Window list option) :(double * Point list) =
+  let dtw (series1: double[][]) (series2: double[][]) (windows: Window list option) distance :(double * Point list)  =
     match windows with
-    | Some(w) -> calculateDtwWithWindow series1 series2 w
-    | None    -> calculateDtwWithWindow series1 series2 [1, series1.Length, 1, series2.Length]
+    | Some(w) -> calculateDtwWithWindow series1 series2 w distance
+    | None    -> calculateDtwWithWindow series1 series2 [1, series1.Length, 1, series2.Length] distance
 
   /// Given a path, define the next-level-up valid windows for pathing
   let expandedResolutionWindow (path: Point list) (n: int) (m: int) (radius: int) :(Window list) = 
@@ -254,18 +253,18 @@ module Internal =
   /// series2: Second series
   /// radius: Search radius
   /// Returns: distance between series and the point mapping of travelled path
-  let rec fastDtwWithPath (series1: double[][]) (series2: double[][]) (radius: int) :(double * Point list) =
+  let rec fastDtwWithPath (series1: double[][]) (series2: double[][]) (radius: int) distance :(double * Point list) =
     let minTSize= radius + 2
 
     if series1.Length < minTSize || series2.Length < minTSize
     then
-      dtw series1 series2 None
+      dtw series1 series2 None distance
     else
       let shrunkX = coarser series1
       let shrunkY = coarser series2
 
-      let (cost, lowResPath) = fastDtwWithPath shrunkX shrunkY radius
+      let (cost, lowResPath) = fastDtwWithPath shrunkX shrunkY radius distance
       let window = expandedResolutionWindow lowResPath series1.Length series2.Length radius
       if Debug then printfn "cost: %A lowResPath: %A window: %A" cost lowResPath window
 
-      dtw series1 series2 (Some window)
+      dtw series1 series2 (Some window) distance
