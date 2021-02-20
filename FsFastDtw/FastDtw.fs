@@ -1,4 +1,4 @@
-﻿namespace FastDtw
+﻿namespace NFastDtw
 
 open Internal
 

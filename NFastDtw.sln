@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NFastDtw.Tests", "FastDtw.Tests\NFastDtw.Tests.csproj", "{843E0A9E-9D7C-4F4B-81A6-A3E44926E55D}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsFastDtw", "FsFastDtw\FsFastDtw.fsproj", "{6DAEAE3D-3E39-4545-988B-239918D74328}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "NFastDtw", "FsFastDtw\NFastDtw.fsproj", "{6DAEAE3D-3E39-4545-988B-239918D74328}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -13,7 +13,7 @@ namespace NFastdtw.Tests
         public void ShouldCorrectlyCalculateDtw()
         {
             var data = JsonConvert.DeserializeObject<TestData>(File.ReadAllText("test.json"));
-            var res2 = FastDtw.FastDtw.Distance(data.x, data.y, 5, (x, y) => (new DenseVector(x) - new DenseVector(y)).L2Norm());
+            var res2 = NFastDtw.FastDtw.Distance(data.x, data.y, 5, (x, y) => (new DenseVector(x) - new DenseVector(y)).L2Norm());
             Assert.Equal(1.0853674243064257, res2);
         }
         private class TestData
