@@ -14,7 +14,7 @@ Fork of [fastdtw](https://bitbucket.org/0x6a62/fastdtw/src/dev/) to support mult
             public void ShouldCorrectlyCalculateDtw()
             {
                 var data = JsonConvert.DeserializeObject<TestData>(File.ReadAllText("test.json"));
-                var res2 = FastDtw.FastDtw.Distance(data.x, data.y, 5, (x, y) => (new DenseVector(x) - new DenseVector(y)).L2Norm());
+                var res2 = NFastDtw.FastDtw.Distance(data.x, data.y, 5, (x, y) => (new DenseVector(x) - new DenseVector(y)).L2Norm());
                 Assert.Equal(1.0853674243064257, result);
             }
             private class TestData
