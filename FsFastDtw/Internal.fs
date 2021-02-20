@@ -26,13 +26,13 @@ module Internal =
   // Functions
 
   /// Calculate distance between 2 values
-  let inline distance (a:float[]) (b:float[]) : float = (new DenseVector(a) - new DenseVector(b)).L2Norm()
+  let inline distance (a:double[]) (b:double[]) : double = (new DenseVector(a) - new DenseVector(b)).L2Norm()
   
   /// Determine maximum of two values
   let inline max a b = if a > b then a else b 
 
   /// Calculate mean of 2 numbers
-  let inline mean (a:float[]) (b:float[]) = Array.init (a.Length) (fun i -> DivideByInt (a.[i] + b.[i]) 2) 
+  let inline mean (a:double[]) (b:double[]) = Array.init (a.Length) (fun i -> DivideByInt (a.[i] + b.[i]) 2) 
 
   /// Determine minimum of two values
   let inline min a b = if a < b then a else b 
@@ -51,7 +51,7 @@ module Internal =
 
   /// Dump the cost grid to the console with an overlayed path
   /// This is primarily for debugging
-  let dumpPathMatrix (series1: float[][]) (series2: float[][]) (costGrid: float[,]) (path: Point list) = 
+  let dumpPathMatrix (series1: double[][]) (series2: double[][]) (costGrid: double[,]) (path: Point list) = 
     // Header (top)
     series2 |> Array.map(fun x -> sprintf "%s  " (Array.map (fun y -> sprintf "%5.1f  " y) x |> String.Concat)) |> String.Concat |> printfn "       %s"
     printfn "  PATH%s" (charFill (series2.Length * 7) "-")
@@ -89,7 +89,7 @@ module Internal =
     inWindowOption i j (fst ws) || inWindowOption i j (snd ws)
 
   // Determine the next best step, when the path must jump to the next window 
-  let getCoordinatesFromNextWindow (i: int) (j: int) windowTail (costGrid: float[,]) =
+  let getCoordinatesFromNextWindow (i: int) (j: int) windowTail (costGrid: double[,]) =
     match windowTail with
     | h::_ ->
               // Determine shortest next step 
@@ -108,7 +108,7 @@ module Internal =
   let getTravelledPath n m window costGrid =
     // printfn "gtp: %d %d %A %A" n m window costGrid
     // Walk backwards through the path
-    let rec getTravelledPath' a i j windowHeads windowTail (costGrid:float[,]) =
+    let rec getTravelledPath' a i j windowHeads windowTail (costGrid:double[,]) =
       // printfn "gtp': a:%A i:%A j:%A wh:%A wt:%A" a i j windowHeads windowTail 
       if not (inWindowOption i j (fst windowHeads))
       then
@@ -135,8 +135,8 @@ module Internal =
 
 
   /// Calculate dtw cost & travelled path
-  let calculateDtw (a: float[][]) (b: float[][]) window :(float * Point list) =
-    let rec calculateDtw' i j n m (costGrid :float[,]) (a :float[][]) (b :float[][]) window :(float * Point list) =
+  let calculateDtw (a: double[][]) (b: double[][]) window :(double * Point list) =
+    let rec calculateDtw' i j n m (costGrid :double[,]) (a :double[][]) (b :double[][]) window :(double * Point list) =
       if i > n then
         let travelledPath = getTravelledPath n m window costGrid 
         (costGrid.[n,m], travelledPath)
@@ -161,9 +161,9 @@ module Internal =
     calculateDtw' 1 1 n m path a b window
 
   /// Calculate Dtw cost and path, limit using windowing
-  let calculateDtwWithWindow (series1: float[][]) (series2: float[][]) (window: Window list) :(float * Point list) =
+  let calculateDtwWithWindow (series1: double[][]) (series2: double[][]) (window: Window list) :(double * Point list) =
     let fullWindow = window
-    let rec calculateDtwWithWindow' pw w i j nmin mmin n m (costGrid:float[,]) (a:float[][]) (b:float[][]) :(float * Point list) =
+    let rec calculateDtwWithWindow' pw w i j nmin mmin n m (costGrid:double[,]) (a:double[][]) (b:double[][]) :(double * Point list) =
       if i > n then
         match w with
         | h::t -> // Done with this window, grab the next one 
@@ -219,7 +219,7 @@ module Internal =
     calculateDtwWithWindow' (0,0,0,0) window' 1 1 nmin mmin nmax mmax path series1 series2
 
   /// Make an array of values more coarse (cut by half)
-  let coarser (series :float[][]) :float[] [] =
+  let coarser (series :double[][]) :double[] [] =
     [|0 .. 2 .. series.Length - 1|]
     |> Array.map (fun i -> if i = series.Length - 1 
                            then series.[i] // Last item when odd number of items is special case
@@ -230,7 +230,7 @@ module Internal =
   /// series2: Second series
   /// windows: List of windows that the path must stay within
   /// Returns: distance between series and the point mapping of travelled path
-  let dtw (series1: float[][]) (series2: float[][]) (windows: Window list option) :(float * Point list) =
+  let dtw (series1: double[][]) (series2: double[][]) (windows: Window list option) :(double * Point list) =
     match windows with
     | Some(w) -> calculateDtwWithWindow series1 series2 w
     | None    -> calculateDtwWithWindow series1 series2 [1, series1.Length, 1, series2.Length]
@@ -254,7 +254,7 @@ module Internal =
   /// series2: Second series
   /// radius: Search radius
   /// Returns: distance between series and the point mapping of travelled path
-  let rec fastDtwWithPath (series1: float[][]) (series2: float[][]) (radius: int) :(float * Point list) =
+  let rec fastDtwWithPath (series1: double[][]) (series2: double[][]) (radius: int) :(double * Point list) =
     let minTSize= radius + 2
 
     if series1.Length < minTSize || series2.Length < minTSize

@@ -10,7 +10,7 @@ type FastDtw () =
   /// series2: Second series
   /// radius: Search radiusG
   /// Returns: distance between series
-  static member Distance (series1: float[][]) (series2: float[][]) (radius: int) :float =
+  static member Distance (series1: double[][]) (series2: double[][]) (radius: int) :double =
     let (cost, _) = fastDtwWithPath series1 series2 radius
     cost
 
@@ -19,5 +19,5 @@ type FastDtw () =
   /// series2: Second series
   /// radius: Search radius
   /// Returns: (distance between series, correlated point maps)
-  static member DistanceWithPath (series1: float[][]) (series2: float[][]) (radius: int) :(float * Point list) =
+  static member DistanceWithPath (series1: double[][]) (series2: double[][]) (radius: int) :(double * Point list) =
     fastDtwWithPath series1 series2 radius
